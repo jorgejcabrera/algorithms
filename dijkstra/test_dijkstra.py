@@ -1,70 +1,76 @@
 from unittest import TestCase
 
-from dijkstra import dijkstra
+from dijkstra import dijkstra_algorithm, path_between
 from graph import Graph
 
 
 def instance_one():
-    g = Graph(9)
-    g.add_edge(0, 1, 4)
-    g.add_edge(0, 6, 7)
-    g.add_edge(1, 6, 11)
-    g.add_edge(1, 7, 20)
-    g.add_edge(1, 2, 9)
-    g.add_edge(2, 3, 6)
-    g.add_edge(2, 4, 2)
-    g.add_edge(3, 4, 10)
-    g.add_edge(3, 5, 5)
-    g.add_edge(4, 5, 15)
-    g.add_edge(4, 7, 1)
-    g.add_edge(4, 8, 5)
-    g.add_edge(5, 8, 12)
-    g.add_edge(6, 7, 1)
-    g.add_edge(7, 8, 3)
-    return g
+    nodes = ["Reykjavik", "Oslo", "Moscow", "London", "Rome", "Berlin", "Belgrade", "Athens"]
+
+    init_graph = {}
+    for node in nodes:
+        init_graph[node] = {}
+
+    init_graph["Reykjavik"]["Oslo"] = 5
+    init_graph["Reykjavik"]["London"] = 4
+    init_graph["Oslo"]["Berlin"] = 1
+    init_graph["Oslo"]["Moscow"] = 3
+    init_graph["Moscow"]["Belgrade"] = 5
+    init_graph["Moscow"]["Athens"] = 4
+    init_graph["Athens"]["Belgrade"] = 1
+    init_graph["Rome"]["Berlin"] = 2
+    init_graph["Rome"]["Athens"] = 2
+
+    return Graph(nodes, init_graph)
 
 
-#              (5)
-#       1(b) ------- 2(d)
-# (4) /   |      /     | (6)\
-# 0(s) (1)|  (8)/   (2)|     5(t)
-# (2) \   |    /       | (2)/
-#       3(c) ------- 4(e)
-#             (10)
 def instance_two():
-    g = Graph(6)
-    g.add_edge(0, 1, 4)
-    g.add_edge(0, 3, 2)
-    g.add_edge(1, 2, 5)
-    g.add_edge(1, 3, 1)
-    g.add_edge(3, 2, 8)
-    g.add_edge(3, 4, 10)
-    g.add_edge(4, 2, 2)
-    g.add_edge(4, 5, 2)
-    g.add_edge(2, 5, 6)
-    return g
+    nodes = ["s", "b", "c", "d", "e", "t"]
+
+    init_graph = {}
+    for node in nodes:
+        init_graph[node] = {}
+
+    init_graph["s"]["b"] = 4
+    init_graph["s"]["c"] = 2
+    init_graph["b"]["d"] = 5
+    init_graph["c"]["b"] = 1
+    init_graph["c"]["d"] = 8
+    init_graph["c"]["e"] = 10
+    init_graph["e"]["d"] = 2
+    init_graph["e"]["t"] = 2
+    init_graph["d"]["t"] = 6
+
+    return Graph(nodes, init_graph)
 
 
 class Test(TestCase):
 
     def test_dijkstra_instance_one(self):
         # given
-        g = instance_one()
+        graph = instance_one()
 
         # when
-        d = dijkstra(g, 0)
+        previous_nodes, shortest_path = dijkstra_algorithm(graph=graph, start_node="Reykjavik")
 
         # then
-        expected_result = {0: 0, 1: 4, 2: 11, 3: 17, 4: 9, 5: 22, 6: 7, 7: 8, 8: 11}
-        self.assertEqual(expected_result, d)
+        expected_result = {'Reykjavik': 0, 'Oslo': 5, 'Moscow': 8, 'London': 4, 'Rome': 8, 'Berlin': 6, 'Belgrade': 11,
+                           'Athens': 10}
+        self.assertEqual(expected_result, shortest_path)
 
     def test_dijkstra_instance_two(self):
         # given
-        g = instance_two()
+        graph = instance_two()
 
         # when
-        d = dijkstra(g, 0)
+        previous_nodes, path_costs = dijkstra_algorithm(graph=graph, start_node="s")
+        path = path_between(previous_nodes, 's', 't')
 
         # then
-        expected_result = {0: 0, 1: 3, 2: 8, 3: 2, 4: 10, 5: 12}
-        self.assertEqual(expected_result, d)
+        expected_shortest_path = {'s': 0, 'b': 3, 'c': 2, 'd': 8, 'e': 10, 't': 12}
+        expected_previous_nodes = {'b': 'c', 'c': 's', 'd': 'b', 'e': 'd', 't': 'e'}
+        expected_path = ['s', 'c', 'b', 'd', 'e', 't']
+
+        self.assertEqual(expected_shortest_path, path_costs)
+        self.assertEqual(expected_previous_nodes, previous_nodes)
+        self.assertEqual(expected_path, path)
